@@ -1,0 +1,4 @@
+[MESSAGES CONTROL]
+enable=useless-suppression
+disable=missing-module-docstring
+disable=missing-function-docstring

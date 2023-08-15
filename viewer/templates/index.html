@@ -1,0 +1,131 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Bufo Offers Bufo</title>
+
+    <link rel="shortcut icon" type="image/png" href="{% static 'all-the-bufo.png' %}">
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous">
+
+    <style>
+        body {
+            background-color: #f3ffef;
+        }
+
+        header {
+            background: linear-gradient(-45deg, #54633a, #33d563, #8bce86, #078466);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: rgba(10, 10, 10, 0.5);
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .search input {
+            width: 100%;
+            padding: 0 10%;
+            font-size: 20pt;
+        }
+
+        .bufo-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            justify-items: center;
+            gap: 40px;
+            width: 100%;
+        }
+
+        .bufo {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bufo img {
+            height: 100px;
+            align-self: center;
+        }
+
+        .bufo:hover img {
+            opacity: 0.5;
+        }
+
+        .bufo pre {
+            overflow: hidden;
+            max-width: 100px;
+            text-overflow: ellipsis;
+            margin: 0;
+            bottom: 0;
+        }
+
+        .bufo:hover pre {
+            overflow: visible;
+            word-break: break-all;
+            white-space: pre-wrap;
+            position: absolute;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="pt-4 pb-4 text-center justify-content-center">
+        <h1 class="display-1">BUFO</h1>
+    </header>
+    <div class="search mb-5">
+        <input id="find-a-bufo" type="text" placeholder="Find-A-Bufo®"/>
+    </div>
+    <main class="container">
+        <div class="row">
+            <div class="bufo-list">
+                {% for bufo in all_the_bufos %}
+                    <div class="bufo">
+                        <img
+                            src="{{bufo_url}}/{{bufo}}"
+                            alt="{{bufo}}"
+                            title="{{bufo}}"
+                            loading="lazy"/>
+                        <pre>{{bufo}}</pre>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+    <script>
+        const search = document.querySelector('#find-a-bufo');
+        const allTheBufo = Array.from(document.querySelectorAll('.bufo'));
+        search.addEventListener('keyup', (event) => {
+            for (const bufo of allTheBufo) {
+                if (!bufo.querySelector('pre').textContent.includes(event.target.value)) {
+                    bufo.classList.add('hidden');
+                } else {
+                    bufo.classList.remove('hidden');
+                }
+            }
+        });
+    </script>
+    <footer class="mt-4 mb-4 text-center">
+        <span>Created with 🐸 by <a href="https://github.com/cal-smith">@🐸</a></span>
+    </footer>
+</body>
+</html>

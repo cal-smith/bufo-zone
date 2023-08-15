@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "bufo"
+version = "0.1.0"
+description = ""
+authors = ["cal <calsmith@protonmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+django = "^4.2.4"
+gunicorn = "^21.2.0"
+whitenoise = {extras = ["brotli"], version = "^6.5.0"}
+requests = "^2.31.0"
+boto3 = "^1.28.30"
+python-dotenv = "^1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

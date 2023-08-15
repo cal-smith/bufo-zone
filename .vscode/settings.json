@@ -1,0 +1,10 @@
+{
+    "python.formatting.provider": "black",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingModuleSource": "none"
+    },
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": false,
+    "python.analysis.typeCheckingMode": "basic"
+}

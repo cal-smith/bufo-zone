@@ -1,0 +1,34 @@
+# fly.toml app configuration file generated for bufo on 2023-08-20T12:47:18-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "bufo"
+primary_region = "yyz"
+console_command = "/code/manage.py shell"
+
+[build]
+
+[env]
+  PORT = "8000"
+  BUFO_URL = "https://all-the.bufo.zone"
+  PROD = "true"
+
+[processes]
+  bufo_web = "./run.sh"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["bufo_web"]
+
+[[statics]]
+  guest_path = "/code/static"
+  url_prefix = "/static/"
+
+[mounts]
+  source="bufo_storage"
+  destination="/data"
