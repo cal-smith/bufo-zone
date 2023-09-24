@@ -1,13 +1,53 @@
 from django.shortcuts import render
+from django.http import JsonResponse, request
 import boto3
 import os
+import json
+from .models import Bufo
 
 s3 = boto3.resource('s3', endpoint_url=os.environ.get('S3_URL'))
 bufo_bucket = s3.Bucket(os.environ.get('S3_BUFO_BUCKET'))
 
 def index(request):
-    all_the_bufos = [obj.key for obj in bufo_bucket.objects.all()]
+    all_the_s3_bufos = [
+        {'name': obj.key, 'score': 0.0, 'frogs': '🐸', 'url': f"{os.environ.get('BUFO_URL')}/{obj.key}"}
+        for obj in bufo_bucket.objects.all()
+    ]
+
+    all_the_bufos = [
+        {'name': obj.name, 'score': obj.score(), 'frogs': '🐸'*int(obj.score() or 0),'url': obj.get_url()}
+        for obj in Bufo.objects.select_related().all()
+    ]
+
+    # tmp hacky thing while we populate the database
+    if len(all_the_bufos) < len(all_the_s3_bufos):
+        all_the_bufos = all_the_s3_bufos
+
     return render(request, 'index.html', {
-        'all_the_bufos': all_the_bufos,
-        'bufo_url': os.environ.get('BUFO_URL')
+        'all_the_bufos': all_the_bufos
+    })
+
+
+def vote(request: request.HttpRequest):
+    if 'votes' not in request.session:
+       request.session['votes'] = {}
+       request.session.set_expiry(24*60*60)
+
+    data = json.loads(request.body)
+    
+    if data['name'] in request.session['votes']:
+        return JsonResponse({
+            'error': 'already_voted',
+            'description': 'Already rated this Bufo today, try again tomorrow!'
+        })
+
+    bufo = Bufo.objects.get(name=data["name"])
+    bufo.bufo_vote_set.create(value=int(data["value"]))
+    
+    request.session['votes'][data['name']] = True
+    request.session.modified = True
+
+    return JsonResponse({
+        'name': bufo.name,
+        'score': bufo.score()
     })

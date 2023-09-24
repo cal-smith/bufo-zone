@@ -21,6 +21,8 @@ with open('all_the_bufo.zip', 'wb') as bf:
 with ZipFile('all_the_bufo.zip') as many_bufo:
     bufo_bucket = s3.Bucket(os.environ.get('S3_BUFO_BUCKET'))
     existing_bufos = set([obj.key for obj in bufo_bucket.objects.all()])
+    skipped = 0
+    uploaded = 0
     for compressed_bufo in many_bufo.filelist:
         bufo = many_bufo.extract(compressed_bufo)
         print(f'extracted bufo to {bufo}')
@@ -29,7 +31,10 @@ with ZipFile('all_the_bufo.zip') as many_bufo:
             if name not in existing_bufos:
                 print(f'uploading bufo {name}')
                 bufo_bucket.upload_file(bufo, name)
+                uploaded += 1
             else:
                 print(f'skipping existing bufo {name}')
+                skipped += 1
         else:
             print(f'skipping {bufo} since it is not a valid bufo')
+    print(f'uploaded {uploaded} bufos and skipped {skipped} bufos')

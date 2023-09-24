@@ -1,1 +1,5 @@
-0 * * * * python bufo_downloader.py
+# Sync bufos from S3 to the local database once an hour
+@hourly python manage.py bufo_sync
+
+# Clear expired sessions once a day
+@hourly python manage.py clearsessions

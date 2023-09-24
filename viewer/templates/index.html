@@ -47,40 +47,77 @@
 
         .bufo-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             justify-items: center;
             gap: 40px;
             width: 100%;
         }
 
         .bufo {
-            position: relative;
             display: flex;
             flex-direction: column;
         }
 
-        .bufo img {
-            height: 100px;
+        .bufo > img {
+            height: 150px;
             align-self: center;
         }
 
-        .bufo:hover img {
+        .bufo:hover > img {
             opacity: 0.5;
         }
 
-        .bufo pre {
+        .bufo > pre {
             overflow: hidden;
-            max-width: 100px;
+            max-width: 150px;
             text-overflow: ellipsis;
             margin: 0;
-            bottom: 0;
         }
 
-        .bufo:hover pre {
+        .bufo:hover > pre {
             overflow: visible;
             word-break: break-all;
             white-space: pre-wrap;
             position: absolute;
+            max-width: 100%;
+            background: lightgreen;
+            padding: 10px;
+            margin-top: 160px;
+        }
+
+        dialog {
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid darkgreen;
+        }
+
+        dialog::backdrop {
+            background: black;
+            opacity: 0.25;
+        }
+
+        dialog img {
+            width: 100%;
+        }
+
+        dialog pre {
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .bufo-rating {
+            display: inline;
+            cursor: pointer;
+        }
+
+        .rating-value {
+            display: inline;
+            opacity: 0.5;
+            cursor: pointer;
+        }
+
+        .option-selected {
+            opacity: 1;
         }
 
         .hidden {
@@ -99,18 +136,49 @@
         <div class="row">
             <div class="bufo-list">
                 {% for bufo in all_the_bufos %}
-                    <div class="bufo">
+                    <div class="bufo" data-name="{{bufo.name}}">
+                        <span class="score">{{bufo.score}} {{bufo.frogs}}</span>
                         <img
-                            src="{{bufo_url}}/{{bufo}}"
-                            alt="{{bufo}}"
-                            title="{{bufo}}"
+                            src="{{bufo.url}}"
+                            alt="{{bufo.name}}"
+                            title="{{bufo.name}}"
                             loading="lazy"/>
-                        <pre>{{bufo}}</pre>
+                        <pre>{{bufo.name}}</pre>
+                        <dialog>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="close-modal btn btn-sm btn-secondary">Close</button>
+                            </div>
+                            <div class="row">
+                                <div class="col-3">
+                                    <img
+                                        src="{{bufo.url}}"
+                                        alt="{{bufo.name}}"
+                                        title="{{bufo.name}}"
+                                        loading="lazy"/>
+                                    </div>
+                                <div class="col">
+                                    <span class="score">{{bufo.score}} {{bufo.frogs}}</span>
+                                    <pre>{{bufo.name}}</pre>
+                                    <span>Rate this bufo:</span>
+                                    <div class="bufo-rating" data-value="0">
+                                        <div class="rating-value" data-value="1">🐸</div>
+                                        <div class="rating-value" data-value="2">🐸</div>
+                                        <div class="rating-value" data-value="3">🐸</div>
+                                        <div class="rating-value" data-value="4">🐸</div>
+                                        <div class="rating-value" data-value="5">🐸</div>
+                                    </div>
+                                    <button type="button" class="submit btn btn-sm btn-primary" disabled>Submit</button>
+                                </div>
+                            </div>
+                        </dialog>
                     </div>
                 {% endfor %}
             </div>
         </div>
     </main>
+    <footer class="mt-4 mb-4 text-center">
+        <span>Created with 🐸 by <a href="https://github.com/cal-smith">@🐸</a></span>
+    </footer>
     <script>
         const search = document.querySelector('#find-a-bufo');
         const allTheBufo = Array.from(document.querySelectorAll('.bufo'));
@@ -123,9 +191,132 @@
                 }
             }
         });
+
+        // borrowed from the django docs on CSRF
+        const getCookie = (name) => {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        const vote = (name, value) => {
+            return fetch('/vote', {
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                }, 
+                body: JSON.stringify({ name, value })
+            })
+            .then(res => res.json())
+            .catch(error => console.error(error));
+        };
+
+        const getLocalNamespace = (namespace) => {
+            return JSON.parse(localStorage.getItem(namespace)) ?? {};
+        }
+
+        const setLocalNamespace = (namespace, value) => {
+            localStorage.setItem(namespace, JSON.stringify(value));
+        }
+
+        const getLocalValue = (namespace, key) => {
+            const data = getLocalNamespace(namespace);
+            return data[key];
+        }
+
+        const setLocalValue = (namespace, key, value) => {
+            const data = getLocalNamespace(namespace);
+            data[key] = value;
+            setLocalNamespace(namespace, data);
+        };
+
+        const getRating = (key) => {
+            return getLocalValue('bufo-ratings', key);
+        };
+
+        const setRating = (key, value) => {
+            setLocalValue('bufo-ratings', key, value);
+        };
+
+        const renderOptions = (options, value) => {
+            options.forEach(option => {
+                if (parseInt(option.dataset.value, 10) <= value) {
+                    option.classList.add('option-selected');
+                } else {
+                    option.classList.remove('option-selected');
+                }
+            });
+        };
+
+        for (const bufo of allTheBufo) {            
+            const name = bufo.dataset.name;
+            const modal = bufo.querySelector('dialog');
+            const bufoRating = bufo.querySelector('.bufo-rating');
+            const options = Array.from(bufoRating.querySelectorAll('.rating-value'));
+            const closeModalButton = bufo.querySelector('button.close-modal');
+            const submitRatingButton = bufo.querySelector('button.submit');
+            const scoreViews = Array.from(bufo.querySelectorAll('.score'));
+
+            bufo.addEventListener('click', () => {
+                if (!modal.open) {
+                    modal.showModal();
+                }
+            });
+
+            closeModalButton.addEventListener('click', (event) => {
+                if (modal.open) {
+                    event.stopPropagation();
+                    modal.close();
+                }
+            });
+            
+            bufoRating.addEventListener('click', (event) => {
+                const currentValue = parseInt(bufoRating.dataset.value, 10);
+                let value = parseInt(event.target.dataset.value, 10);
+                if (value === 1 && currentValue === 1) {
+                    value = 0;
+                    submitRatingButton.disabled = true;
+                } else {
+                    submitRatingButton.disabled = false;
+                }
+                bufoRating.dataset.value = value;
+                renderOptions(options, value);
+            });
+
+            submitRatingButton.addEventListener('click', () => {
+                submitRatingButton.disabled = true;
+                const oldRating = getRating(name);
+                setRating(name, bufoRating.dataset.value);
+                vote(name, bufoRating.dataset.value).then(data => {
+                    if (data.error) {
+                        setRating(name, oldRating);
+                        bufoRating.dataset.value = oldRating;
+                        renderOptions(options, oldRating);
+                        alert(data.description);
+                    } else {
+                        scoreViews.forEach(scoreView => {
+                            scoreView.textContent = `${data.score.toFixed(1)} ${(new Array(Math.floor(data.score))).fill('🐸').join('')}`;
+                        });
+                    }
+                });
+            });
+
+            const initialRating = getRating(name);
+            renderOptions(options, initialRating);
+            bufoRating.dataset.value = initialRating;
+        }
     </script>
-    <footer class="mt-4 mb-4 text-center">
-        <span>Created with 🐸 by <a href="https://github.com/cal-smith">@🐸</a></span>
-    </footer>
 </body>
 </html>
