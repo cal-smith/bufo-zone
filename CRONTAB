@@ -1,5 +1,5 @@
 # Sync bufos from S3 to the local database once an hour
-@hourly python manage.py bufo_sync
+0 * * * * python manage.py bufo_sync
 
-# Clear expired sessions once a day
-@hourly python manage.py clearsessions
+# Clear expired sessions once an hour
+30 * * * * python manage.py clearsessions
