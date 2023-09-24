@@ -9,19 +9,10 @@ s3 = boto3.resource('s3', endpoint_url=os.environ.get('S3_URL'))
 bufo_bucket = s3.Bucket(os.environ.get('S3_BUFO_BUCKET'))
 
 def index(request):
-    all_the_s3_bufos = [
-        {'name': obj.key, 'score': 0.0, 'frogs': '🐸', 'url': f"{os.environ.get('BUFO_URL')}/{obj.key}"}
-        for obj in bufo_bucket.objects.all()
-    ]
-
     all_the_bufos = [
         {'name': obj.name, 'score': obj.score(), 'frogs': '🐸'*int(obj.score() or 0),'url': obj.get_url()}
         for obj in Bufo.objects.select_related().all()
     ]
-
-    # tmp hacky thing while we populate the database
-    if len(all_the_bufos) < len(all_the_s3_bufos):
-        all_the_bufos = all_the_s3_bufos
 
     return render(request, 'index.html', {
         'all_the_bufos': all_the_bufos
