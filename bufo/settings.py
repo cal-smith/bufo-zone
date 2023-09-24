@@ -35,6 +35,10 @@ ALLOWED_HOSTS = ['bufo.fly.dev', 'bufo.zone']
 if DEBUG:
     ALLOWED_HOSTS = ['.localhost', '127.0.0.1', '[::1]']
 
+CSRF_TRUSTED_ORIGINS = []
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS = ['https://bufo.zone']
+
 # Application definition
 
 INSTALLED_APPS = [
