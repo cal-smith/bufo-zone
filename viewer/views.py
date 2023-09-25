@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse, request
+from django.views.decorators.csrf import ensure_csrf_cookie
 import boto3
 import os
 import json
@@ -8,6 +9,7 @@ from .models import Bufo
 s3 = boto3.resource('s3', endpoint_url=os.environ.get('S3_URL'))
 bufo_bucket = s3.Bucket(os.environ.get('S3_BUFO_BUCKET'))
 
+@ensure_csrf_cookie
 def index(request):
     all_the_bufos = [
         {'name': obj.name, 'score': obj.score(), 'frogs': '🐸'*int(obj.score() or 0),'url': obj.get_url()}

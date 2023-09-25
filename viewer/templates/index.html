@@ -217,7 +217,8 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrftoken
                 }, 
-                body: JSON.stringify({ name, value })
+                body: JSON.stringify({ name, value }),
+                credentials: 'include'
             })
             .then(res => res.json())
             .catch(error => console.error(error));
