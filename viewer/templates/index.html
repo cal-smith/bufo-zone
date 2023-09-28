@@ -58,12 +58,16 @@
             flex-direction: column;
         }
 
-        .bufo > img {
+        .bufo .img-wrapper {
             height: 150px;
+        }
+
+        .bufo .img-wrapper img {
+            width: 150px;
             align-self: center;
         }
 
-        .bufo:hover > img {
+        .bufo:hover .img-wrapper img {
             opacity: 0.5;
         }
 
@@ -137,12 +141,18 @@
             <div class="bufo-list">
                 {% for bufo in all_the_bufos %}
                     <div class="bufo" data-name="{{bufo.name}}">
-                        <span class="score">{{bufo.score}} {{bufo.frogs}}</span>
-                        <img
-                            src="{{bufo.url}}"
-                            alt="{{bufo.name}}"
-                            title="{{bufo.name}}"
-                            loading="lazy"/>
+                        {% if bufo.score %}
+                            <span class="score">{{bufo.score}} {{bufo.frogs}}</span>
+                        {% else %}
+                            <span class="score">Click to rate!</span>
+                        {% endif %}
+                        <div class="img-wrapper">
+                            <img
+                                src="{{bufo.url}}"
+                                alt="{{bufo.name}}"
+                                title="{{bufo.name}}"
+                                loading="lazy"/>
+                        </div>
                         <pre>{{bufo.name}}</pre>
                         <dialog>
                             <div class="d-flex justify-content-end">
@@ -182,9 +192,15 @@
     <script>
         const search = document.querySelector('#find-a-bufo');
         const allTheBufo = Array.from(document.querySelectorAll('.bufo'));
+        const UNHELPFUL_CHARACTERS = /[\s-_]/gi;
+        const doesFuzzyMatch = (value, target) => {
+            return value.replace(UNHELPFUL_CHARACTERS, '').toLowerCase()
+                .includes(target.replace(UNHELPFUL_CHARACTERS, '').toLowerCase());
+        };
+
         search.addEventListener('keyup', (event) => {
             for (const bufo of allTheBufo) {
-                if (!bufo.querySelector('pre').textContent.includes(event.target.value)) {
+                if (!doesFuzzyMatch(bufo.querySelector('pre').textContent, event.target.value)) {
                     bufo.classList.add('hidden');
                 } else {
                     bufo.classList.remove('hidden');
