@@ -14,4 +14,4 @@ bufo_bucket = s3.Bucket(os.environ.get('S3_BUFO_BUCKET'))
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         all_the_bufos = [Bufo(name=obj.key) for obj in bufo_bucket.objects.all()]
-        Bufo.objects.bulk_create(all_the_bufos, ignore_conflicts=True)
+        Bufo.objects.bulk_create(all_the_bufos, batch_size=100, ignore_conflicts=True)
