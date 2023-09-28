@@ -12,8 +12,8 @@ bufo_bucket = s3.Bucket(os.environ.get('S3_BUFO_BUCKET'))
 @ensure_csrf_cookie
 def index(request):
     all_the_bufos = [
-        {'name': obj.name, 'score': obj.score(), 'frogs': '🐸'*int(obj.score() or 0),'url': obj.get_url()}
-        for obj in Bufo.objects.select_related().all()
+        {'name': obj.name, 'score': round(obj.vote_avg or 0, 1), 'frogs': '🐸'*int(obj.vote_avg or 0),'url': obj.get_url()}
+        for obj in Bufo.get_with_scores()
     ]
 
     return render(request, 'index.html', {
