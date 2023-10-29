@@ -12,6 +12,7 @@ console_command = "/code/manage.py shell"
 [env]
   PORT = "8000"
   BUFO_URL = "https://all-the.bufo.zone"
+  DB_PATH = "/data/db.sqlite3"
   PROD = "true"
 
 [processes]

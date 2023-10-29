@@ -8,10 +8,12 @@ env_file = find_dotenv()
 if env_file:
     load_dotenv(env_file)
 
-s3 = boto3.resource('s3', endpoint_url=os.environ.get('S3_URL'))
-bufo_bucket = s3.Bucket(os.environ.get('S3_BUFO_BUCKET'))
+client = boto3.client('s3', endpoint_url=os.environ.get('S3_URL'))
 
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
-        all_the_bufos = [Bufo(name=obj.key) for obj in bufo_bucket.objects.all()]
-        Bufo.objects.bulk_create(all_the_bufos, batch_size=100, ignore_conflicts=True)
+        paginator = client.get_paginator('list_objects')
+        page_iterator = paginator.paginate(Bucket=os.environ.get('S3_BUFO_BUCKET'), PaginationConfig={'PageSize': 100})
+        for page in page_iterator:
+            all_the_bufos = [Bufo(name=item['Key']) for item in page['Contents']]
+            Bufo.objects.bulk_create(all_the_bufos, ignore_conflicts=True)
