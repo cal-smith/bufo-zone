@@ -108,11 +108,10 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SECRET_KEY")))
 
 	session, _ := store.Get(r, "bufo-go-votes")
-	if session.IsNew {
-		session.Options.MaxAge = int((time.Hour * 12).Seconds())
-	}
 
-	if session.Values[inputs.Name] != nil {
+	name, ok := session.Values[inputs.Name].(int64)
+	futureTime := time.Unix(name, 0).Add(time.Hour * 12)
+	if ok && time.Now().Compare(futureTime) < 0 {
 		log.Println("vote: already voted today", inputs)
 		errorData, err := json.Marshal(BufoVoteErrorData{
 			Error:       "already_voted",
@@ -127,7 +126,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("vote: adding vote for", inputs)
-	session.Values[inputs.Name] = true
+	session.Values[inputs.Name] = time.Now().Unix()
 	err := session.Save(r, w)
 	if err != nil {
 		panic(err)
