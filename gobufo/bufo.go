@@ -109,7 +109,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := store.Get(r, "bufo-go-votes")
 	if session.IsNew {
-		session.Options.MaxAge = int(time.Hour) * 12
+		session.Options.MaxAge = int((time.Hour * 12).Seconds())
 	}
 
 	if session.Values[inputs.Name] != nil {

@@ -61,8 +61,9 @@
         }
 
         .bufo .img-wrapper img {
-            width: 150px;
+            width: 100%;
             align-self: center;
+            max-height: 100%;
         }
 
         .bufo:hover .img-wrapper img {
@@ -165,7 +166,11 @@
                                         loading="lazy"/>
                                     </div>
                                 <div class="col">
-                                    <span class="score">{{.Score}} {{.Frogs}}</span>
+                                    {{ if ne .Score -1 }}
+                                        <span class="score">{{.Score}} {{.Frogs}}</span>
+                                    {{ else }}
+                                        <span class="score">Not yet rated!</span>
+                                    {{ end }}
                                     <pre>{{.Name}}</pre>
                                     <span>Rate this bufo:</span>
                                     <div class="bufo-rating" data-value="0">
