@@ -13,11 +13,10 @@ import (
 	"text/template"
 	"time"
 
+	"bufo.zone/dbufo"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
-
-	"bufo.zone/dbufo"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -167,7 +166,7 @@ func main() {
 	}
 
 	router := httprouter.New()
-	router.HandlerFunc(http.MethodGet, "/", indexHandler)
+	router.Handler(http.MethodGet, "/", http.HandlerFunc(indexHandler))
 	router.HandlerFunc(http.MethodPost, "/vote", voteHandler)
 	router.ServeFiles("/static/*filepath", http.Dir("static"))
 
