@@ -11,6 +11,27 @@ import (
 	"time"
 )
 
+const createBufo = `-- name: CreateBufo :one
+insert into
+    viewer_bufo (name, created)
+values
+    (?, ?)
+on conflict(name) do nothing
+returning name, created
+`
+
+type CreateBufoParams struct {
+	Name    string
+	Created time.Time
+}
+
+func (q *Queries) CreateBufo(ctx context.Context, arg CreateBufoParams) (ViewerBufo, error) {
+	row := q.db.QueryRowContext(ctx, createBufo, arg.Name, arg.Created)
+	var i ViewerBufo
+	err := row.Scan(&i.Name, &i.Created)
+	return i, err
+}
+
 const createVote = `-- name: CreateVote :one
 insert into
     viewer_bufovote (value, created, bufo_id)
