@@ -5,12 +5,11 @@
 
 app = "bufo"
 primary_region = "yyz"
-console_command = "/code/manage.py shell"
 
 [build]
 
 [env]
-  PORT = "8000"
+  BUFO_PORT = "8000"
   BUFO_URL = "https://all-the.bufo.zone"
   DB_PATH = "/data/db.sqlite3"
   PROD = "true"

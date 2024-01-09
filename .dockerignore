@@ -4,3 +4,5 @@ fly.toml
 all-the-bufo-main
 *.zip
 .env
+viewer/
+bufo/
