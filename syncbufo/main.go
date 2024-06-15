@@ -90,7 +90,8 @@ func sync_to_s3(service *s3.S3, uploader *s3manager.Uploader) {
 		wg.Add(1)
 		go func(bufo *zip.File) {
 			defer wg.Done()
-			if strings.Contains(bufo.Name, "/all-the-bufo/") {
+
+			if !bufo.FileInfo().IsDir() && strings.Contains(bufo.Name, "/all-the-bufo/") {
 				name := path.Base(bufo.Name)
 				is_existing_bufo := slices.ContainsFunc(list, func(obj *s3.Object) bool {
 					return *obj.Key == name
