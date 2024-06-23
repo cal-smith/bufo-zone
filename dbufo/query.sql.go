@@ -7,26 +7,26 @@ package dbufo
 
 import (
 	"context"
-	"database/sql"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createBufo = `-- name: CreateBufo :one
 insert into
     viewer_bufo (name, created)
 values
-    (?, ?)
-on conflict(name) do nothing
+    ($1, $2)
+on conflict(name) do update set name = EXCLUDED.name
 returning name, created
 `
 
 type CreateBufoParams struct {
 	Name    string
-	Created time.Time
+	Created pgtype.Timestamptz
 }
 
 func (q *Queries) CreateBufo(ctx context.Context, arg CreateBufoParams) (ViewerBufo, error) {
-	row := q.db.QueryRowContext(ctx, createBufo, arg.Name, arg.Created)
+	row := q.db.QueryRow(ctx, createBufo, arg.Name, arg.Created)
 	var i ViewerBufo
 	err := row.Scan(&i.Name, &i.Created)
 	return i, err
@@ -36,17 +36,17 @@ const createVote = `-- name: CreateVote :one
 insert into
     viewer_bufovote (value, created, bufo_id)
 values
-    (?, ?, ?) returning id, value, created, bufo_id
+    ($1, $2, $3) returning id, value, created, bufo_id
 `
 
 type CreateVoteParams struct {
-	Value   int64
-	Created time.Time
+	Value   int32
+	Created pgtype.Timestamptz
 	BufoID  string
 }
 
 func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) (ViewerBufovote, error) {
-	row := q.db.QueryRowContext(ctx, createVote, arg.Value, arg.Created, arg.BufoID)
+	row := q.db.QueryRow(ctx, createVote, arg.Value, arg.Created, arg.BufoID)
 	var i ViewerBufovote
 	err := row.Scan(
 		&i.ID,
@@ -71,16 +71,16 @@ select
 from
     viewer_bufo
 where
-    name = ?
+    name = $1
 `
 
 type GetBufoRow struct {
 	Name   string
-	Rating sql.NullFloat64
+	Rating float64
 }
 
 func (q *Queries) GetBufo(ctx context.Context, name string) (GetBufoRow, error) {
-	row := q.db.QueryRowContext(ctx, getBufo, name)
+	row := q.db.QueryRow(ctx, getBufo, name)
 	var i GetBufoRow
 	err := row.Scan(&i.Name, &i.Rating)
 	return i, err
@@ -91,7 +91,7 @@ select
     name,
     (
         select
-            avg(value)
+            cast(COALESCE(avg(value), -1) as INTEGER)
         from
             viewer_bufovote
         where
@@ -103,11 +103,11 @@ from
 
 type ListBufosRow struct {
 	Name   string
-	Rating sql.NullFloat64
+	Rating int32
 }
 
 func (q *Queries) ListBufos(ctx context.Context) ([]ListBufosRow, error) {
-	rows, err := q.db.QueryContext(ctx, listBufos)
+	rows, err := q.db.Query(ctx, listBufos)
 	if err != nil {
 		return nil, err
 	}
@@ -119,9 +119,6 @@ func (q *Queries) ListBufos(ctx context.Context) ([]ListBufosRow, error) {
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

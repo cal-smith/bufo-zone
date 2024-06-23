@@ -2,27 +2,43 @@ package dbhelper
 
 import (
 	"context"
-	"database/sql"
 	_ "embed"
 	"os"
 
 	"bufo.zone/dbufo"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-//go:embed schema.sql
-var tables string
+type DbHelpers struct {
+	Pool    *pgxpool.Pool
+	Queries *dbufo.Queries
+}
 
-func GetDb(ctx context.Context) *dbufo.Queries {
-	dbPath := os.Getenv("DB_PATH")
-	db, err := sql.Open("sqlite3", dbPath)
+func GetDb(ctx context.Context) *DbHelpers {
+	dbUrl := os.Getenv("DB_URL")
+	db, err := pgxpool.New(ctx, dbUrl)
 	if err != nil {
 		panic(err)
 	}
 
-	if _, err := db.ExecContext(ctx, tables); err != nil {
+	return &DbHelpers{
+		Pool:    db,
+		Queries: dbufo.New(db),
+	}
+}
+
+func (helpers *DbHelpers) Close() {
+	helpers.Pool.Close()
+}
+
+func GetConn(ctx context.Context) *pgx.Conn {
+	// dbPath := os.Getenv("DB_PATH")
+	dbUrl := "postgres://postgres:password@localhost:5432/bufozone"
+	db, err := pgx.Connect(ctx, dbUrl)
+	if err != nil {
 		panic(err)
 	}
 
-	return dbufo.New(db)
+	return db
 }

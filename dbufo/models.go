@@ -5,17 +5,17 @@
 package dbufo
 
 import (
-	"time"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ViewerBufo struct {
 	Name    string
-	Created time.Time
+	Created pgtype.Timestamptz
 }
 
 type ViewerBufovote struct {
 	ID      int64
-	Value   int64
-	Created time.Time
+	Value   int32
+	Created pgtype.Timestamptz
 	BufoID  string
 }

@@ -15,9 +15,10 @@ import (
 	dbhelper "bufo.zone"
 	"bufo.zone/dbufo"
 	"github.com/gorilla/sessions"
+	_ "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 //go:embed templates/*
@@ -33,7 +34,9 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	queries := dbhelper.GetDb(ctx)
+	helpers := dbhelper.GetDb(ctx)
+	queries := helpers.Queries
+	defer helpers.Close()
 
 	data := struct {
 		Bufos []BufoViewData
@@ -47,16 +50,17 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, bufo := range res {
-		score := -1
-		if bufo.Rating.Valid {
-			score = int(bufo.Rating.Float64)
+		score := int(bufo.Rating)
+		frogs := ""
+		if bufo.Rating > 0 {
+			frogs = strings.Repeat("🐸", int(bufo.Rating))
 		}
 
 		url, _ := url.JoinPath(os.Getenv("BUFO_URL"), bufo.Name)
 		viewData := BufoViewData{
 			Name:  bufo.Name,
 			Score: score,
-			Frogs: strings.Repeat("🐸", int(bufo.Rating.Float64)),
+			Frogs: frogs,
 			Url:   url,
 		}
 		data.Bufos = append(data.Bufos, viewData)
@@ -115,10 +119,12 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	queries := dbhelper.GetDb(ctx)
+	helpers := dbhelper.GetDb(ctx)
+	queries := helpers.Queries
+	defer helpers.Close()
 	_, err = queries.CreateVote(ctx, dbufo.CreateVoteParams{
-		Value:   int64(inputs.Value),
-		Created: time.Now(),
+		Value:   int32(inputs.Value),
+		Created: pgtype.Timestamptz{Time: time.Now(), Valid: true},
 		BufoID:  inputs.Name,
 	})
 	if err != nil {
@@ -132,7 +138,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(BufoVoteSuccessData{
 		Name:  vote.Name,
-		Score: int(vote.Rating.Float64),
+		Score: int(vote.Rating),
 	})
 	if err != nil {
 		panic(err)
@@ -143,7 +149,7 @@ func voteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	err := godotenv.Load("../.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Println("Error loading .env file")
 	}
