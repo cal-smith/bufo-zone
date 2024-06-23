@@ -1,9 +1,10 @@
 version: 2
 sql:
-  - engine: "sqlite"
-    schema: "schema.sql"
+  - engine: "postgresql"
+    schema: "migrations"
     queries: "query.sql"
     gen:
       go:
         package: "dbufo"
         out: "dbufo"
+        sql_package: "pgx/v5"

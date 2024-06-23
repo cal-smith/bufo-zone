@@ -3,7 +3,7 @@ select
     name,
     (
         select
-            avg(value)
+            cast(COALESCE(avg(value), -1) as INTEGER)
         from
             viewer_bufovote
         where
@@ -26,18 +26,18 @@ select
 from
     viewer_bufo
 where
-    name = ?;
+    name = $1;
 
 -- name: CreateVote :one
 insert into
     viewer_bufovote (value, created, bufo_id)
 values
-    (?, ?, ?) returning *;
+    ($1, $2, $3) returning *;
 
 -- name: CreateBufo :one
 insert into
     viewer_bufo (name, created)
 values
-    (?, ?)
-on conflict(name) do nothing
+    ($1, $2)
+on conflict(name) do update set name = EXCLUDED.name
 returning *;

@@ -20,6 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/joho/godotenv"
 )
 
@@ -130,13 +131,26 @@ func sync_to_s3(service *s3.S3, uploader *s3manager.Uploader) {
 func sync_to_sqlite(service *s3.S3) {
 	ctx := context.Background()
 
-	queries := dbhelper.GetDb(ctx)
+	helpers := dbhelper.GetDb(ctx)
+	queries := helpers.Queries
+	defer helpers.Close()
 	list := list_bufos(service)
+
+	tx, err := helpers.Pool.Begin(ctx)
+	if err != nil {
+		panic(err)
+	}
+	defer tx.Rollback(ctx)
+	queriestx := queries.WithTx(tx)
 
 	for _, bufo := range list {
 		fmt.Printf("syncing: %s\n", *bufo.Key)
-		queries.CreateBufo(ctx, dbufo.CreateBufoParams{Name: *bufo.Key, Created: time.Now()})
+		_, e := queriestx.CreateBufo(ctx, dbufo.CreateBufoParams{Name: *bufo.Key, Created: pgtype.Timestamptz{Time: time.Now(), Valid: true}})
+		if e != nil {
+			panic(e)
+		}
 	}
+	tx.Commit(ctx)
 	fmt.Printf("synced %d bufos\n", len(list))
 }
 
