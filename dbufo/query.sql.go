@@ -99,6 +99,8 @@ select
     ) as rating
 from
     viewer_bufo
+order by
+    name
 `
 
 type ListBufosRow struct {

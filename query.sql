@@ -10,7 +10,9 @@ select
             bufo_id = name
     ) as rating
 from
-    viewer_bufo;
+    viewer_bufo
+order by
+    name;
 
 -- name: GetBufo :one
 select
