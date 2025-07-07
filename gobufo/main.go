@@ -66,6 +66,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		data.Bufos = append(data.Bufos, viewData)
 	}
 
+	w.Header().Add("Cache-Control", "max-age=3600")
+
 	err = t.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
 		panic(err)
